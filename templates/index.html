@@ -9,8 +9,13 @@
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
 <body>
-    <!-- History Sidebar (Moved to top left) -->
-    <div class="sidebar active" id="historySidebar">
+    <!-- History Button -->
+    <button class="btn btn-outline-secondary position-fixed" id="historyBtn" style="top: 20px; left: 20px; z-index: 1030;">
+        <i class="fas fa-history"></i> History
+    </button>
+
+    <!-- History Sidebar -->
+    <div class="sidebar" id="historySidebar">
         <div class="sidebar-header">
             <h3>Recent Plans</h3>
             <button class="btn-close" id="closeSidebar"></button>
