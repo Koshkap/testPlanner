@@ -10,21 +10,22 @@ body {
     color: #333;
 }
 
-/* Sidebar Styles */
+/* Sidebar Styles - Updated for top left position */
 .sidebar {
     position: fixed;
-    left: calc(-1 * var(--sidebar-width));
+    left: 0;
     top: 0;
     width: var(--sidebar-width);
     height: 100%;
     background: white;
     z-index: 1040;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    transition: left var(--transition-speed);
+    transition: transform var(--transition-speed);
+    transform: translateX(-100%);
 }
 
 .sidebar.active {
-    left: 0;
+    transform: translateX(0);
 }
 
 .sidebar-header {
@@ -33,6 +34,7 @@ body {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid #dee2e6;
+    background: var(--primary-light);
 }
 
 .sidebar-content {
@@ -77,6 +79,7 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(26, 115, 232, 0.15);
 }
 
+/* Buttons */
 .btn-primary {
     background-color: var(--primary-color);
     border: none;
@@ -90,20 +93,95 @@ body {
     transform: translateY(-1px);
 }
 
+/* Content Sections */
+.content-section {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.section-header {
+    padding: 1rem;
+    background: var(--primary-light);
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+}
+
+.section-header:hover {
+    background-color: #dce9fc;
+}
+
+.section-header .fa-chevron-down {
+    transition: transform var(--transition-speed);
+}
+
+.section-content.show .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.section-content {
+    padding: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all var(--transition-speed);
+}
+
+.section-content.show {
+    padding: 1rem;
+    max-height: none;
+}
+
+.section-summary {
+    color: #666;
+    font-size: 0.9rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
     }
 
-    .card {
-        margin-bottom: 1rem;
-    }
-
     .sidebar {
         width: 100%;
-        left: -100%;
+        transform: translateX(-100%);
     }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+}
+
+/* Personalization Form */
+.personalization-form {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.personalization-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+/* Animation for content sections */
+.section-content {
+    transition: all var(--transition-speed);
+}
+
+.section-content.collapse:not(.show) {
+    display: block;
+    height: 0;
+    overflow: hidden;
+}
+
+.section-content.collapsing {
+    height: 0;
+    overflow: hidden;
+    transition: height var(--transition-speed);
+}
+
+.section-content.collapse.show {
+    height: auto;
 }
 
 /* Landing Page Styles */
