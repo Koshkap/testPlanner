@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Lesson Planner</title>
+    <!-- Bootstrap and Font Awesome CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Template Selection Modal -->
+    <div class="modal fade" id="templateModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Select a Template</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        {% for template_key, template in templates.items() %}
+                        <div class="col-md-6 mb-3">
+                            <div class="template-card" data-template="{{ template_key }}" data-subtemplates='{{ template.subtemplates|tojson }}'>
+                                <h4>{{ template_key|title }}</h4>
+                                <p class="small text-muted">{{ template.description }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar Toggle Button (Fixed Position) -->
+    <button class="btn btn-primary sidebar-toggle position-fixed" id="sidebarToggle" style="right: 20px; bottom: 20px; z-index: 1000;">
+        <i class="fas fa-history"></i>
+    </button>
+
+    <!-- History Sidebar -->
+    <div class="sidebar" id="historySidebar">
+        <div class="sidebar-header">
+            <h3>Recent Plans</h3>
+            <button class="btn-close" id="closeSidebar"></button>
+        </div>
+        <div id="lessonHistory" class="sidebar-content">
+            <!-- History items will be added here dynamically -->
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mt-4" style="max-width: 1000px;">
+        <header class="text-center mb-5">
+            <h1><i class="fas fa-chalkboard-teacher"></i> AI Lesson Planner</h1>
+            <p class="lead">Create professional educational plans with AI assistance</p>
+        </header>
+
+        <div class="row justify-content-center g-4">
+            <!-- Form Section -->
+            <div class="col-md-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <form id="lessonForm">
+                            <!-- Template Selection -->
+                            <div class="mb-3">
+                                <label class="form-label">Selected Template</label>
+                                <div class="d-flex align-items-center">
+                                    <div id="selectedTemplate" class="form-control flex-grow-1"></div>
+                                    <button type="button" class="btn btn-outline-primary ms-2" id="changeTemplate">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Describe your lesson -->
+                            <div class="mb-3">
+                                <label class="form-label">Describe your lesson</label>
+                                <textarea class="form-control" name="subject" required 
+                                    placeholder="Describe your lesson idea or topic..."></textarea>
+                            </div>
+
+                            <!-- Subtemplate Button -->
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-secondary w-100" id="subtemplateButton" data-bs-toggle="modal" data-bs-target="#subtemplateModal">
+                                    <span id="selectedSubtemplate">Choose a Subtemplate (Optional)</span>
+                                    <i class="fas fa-chevron-right float-end mt-1"></i>
+                                </button>
+                            </div>
+
+                            <!-- Personalization Button -->
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#personalizationModal">
+                                    <i class="fas fa-user-cog"></i> Personalize Your Lessons
+                                    <i class="fas fa-chevron-right float-end mt-1"></i>
+                                </button>
+                            </div>
+
+                            
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary w-100">
+                                <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                                Generate Plan
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Output Section -->
+            <div class="col-md-7">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="card-title">
+                                Generated Plan
+                                <i class="fas fa-chevron-down ms-2"></i>
+                            </h3>
+                            <div class="btn-group">
+                                <button class="btn btn-outline-primary" id="exportPDF">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </button>
+                                <button class="btn btn-outline-primary" id="exportWord">
+                                    <i class="fas fa-file-word"></i> Word
+                                </button>
+                            </div>
+                        </div>
+                        <div id="lessonPlanOutput" class="lesson-output">
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-lightbulb fa-2x mb-2"></i>
+                                <p>Your lesson plan will appear here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subtemplate Modal -->
+    <div class="modal fade" id="subtemplateModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Choose a Subtemplate</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="subtemplateContent">
+                        <!-- Subtemplates will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Personalization Modal -->
+    <div class="modal fade" id="personalizationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Personalize Your Lessons</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="personalizationForm">
+                        <div class="mb-3">
+                            <label class="form-label">Default Grade Level</label>
+                            <select class="form-select" name="defaultGrade">
+                                <option value="">Select Level</option>
+                                <option value="K">Kindergarten</option>
+                                <option value="1">Grade 1</option>
+                                <option value="2">Grade 2</option>
+                                <option value="3">Grade 3</option>
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                                <option value="10">Grade 10</option>
+                                <option value="11">Grade 11</option>
+                                <option value="12">Grade 12</option>
+                                <option value="College">College/University</option>
+                                <option value="Business">Professional/Business</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Default Lesson Duration (minutes)</label>
+                            <input type="number" class="form-control" name="defaultDuration" min="1" value="45">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Teaching Style Preferences</label>
+                            <textarea class="form-control" name="teachingPreferences" rows="3" 
+                                placeholder="Describe your teaching style, preferred activities, or any specific approaches you typically use"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Save Preferences</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resources Section Template -->
+    <div id="resourcesTemplate" style="display: none;">
+        <div class="resources-section mt-4">
+            <h4>Additional Resources</h4>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fab fa-youtube text-danger"></i> Related Videos
+                            </h5>
+                            <div class="video-resources"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-file-alt text-primary"></i> Worksheets & Materials
+                            </h5>
+                            <div class="worksheet-resources"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Pass templates data to JavaScript
+        window.TEMPLATES_DATA = {{ templates|tojson|safe }};
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
