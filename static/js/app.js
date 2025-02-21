@@ -47,9 +47,8 @@ document.addEventListener('DOMContentLoaded', function() {
         templateModal.show();
     });
 
-    // History button and sidebar handling
+    // History button handling
     const historyBtn = document.getElementById('historyBtn');
-    const sidebar = document.getElementById('historySidebar');
     
     historyBtn?.addEventListener('click', () => {
         sidebar.classList.toggle('active');
