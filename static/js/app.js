@@ -47,10 +47,15 @@ document.addEventListener('DOMContentLoaded', function() {
         templateModal.show();
     });
 
-    // Close sidebar
-    closeSidebar?.addEventListener('click', () => {
-        sidebar.classList.remove('active');
-    });
+    // Sidebar functionality
+    const sidebar = document.getElementById('historySidebar');
+    const closeSidebar = document.getElementById('closeSidebar');
+
+    if (sidebar && closeSidebar) {
+        closeSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+        });
+    }
 
     // Display lesson plan with expandable sections
     function displayLessonPlan(data) {
