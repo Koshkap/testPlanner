@@ -5,30 +5,43 @@ document.addEventListener('DOMContentLoaded', function() {
         new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Initialize modals
+    // Initialize modals and elements
     const templateModalEl = document.getElementById('templateModal');
     const templateModal = new bootstrap.Modal(templateModalEl);
-    const subtemplateModal = new bootstrap.Modal(document.getElementById('subtemplateModal'));
     const personalizationModal = new bootstrap.Modal(document.getElementById('personalizationModal'));
+    const templateCards = document.querySelectorAll('.template-card');
+    const selectedTemplateDisplay = document.getElementById('selectedTemplate');
+    const subtemplateButton = document.getElementById('subtemplateButton');
+    const lessonForm = document.getElementById('lessonForm');
+    const lessonOutput = document.getElementById('lessonPlanOutput');
+    const sidebar = document.getElementById('historySidebar');
+    const closeSidebar = document.getElementById('closeSidebar');
+    const historyBtn = document.getElementById('historyBtn');
 
     // Template variables
     let selectedTemplate = '';
     let currentSubtemplate = '';
 
+    // History sidebar toggle
+    historyBtn?.addEventListener('click', () => {
+        sidebar?.classList.toggle('active');
+    });
+
+    closeSidebar?.addEventListener('click', () => {
+        sidebar?.classList.remove('active');
+    });
+
+    // Close sidebar when clicking outside
+    document.addEventListener('click', (e) => {
+        if (sidebar && !sidebar.contains(e.target) && !historyBtn.contains(e.target)) {
+            sidebar.classList.remove('active');
+        }
+    });
+
     // Show template modal on page load if no template is selected
     if (!selectedTemplate) {
         templateModal.show();
     }
-
-    // DOM elements
-    const templateCards = document.querySelectorAll('.template-card');
-    const selectedTemplateDisplay = document.getElementById('selectedTemplate');
-    const subtemplateButton = document.getElementById('subtemplateButton');
-    const subtemplateContent = document.getElementById('subtemplateContent');
-    const lessonForm = document.getElementById('lessonForm');
-    const lessonOutput = document.getElementById('lessonPlanOutput');
-    const sidebar = document.getElementById('historySidebar');
-    const closeSidebar = document.getElementById('closeSidebar');
 
     // Template selection
     templateCards.forEach(card => {
