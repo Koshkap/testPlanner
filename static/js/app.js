@@ -47,23 +47,9 @@ document.addEventListener('DOMContentLoaded', function() {
         templateModal.show();
     });
 
-    // History button and sidebar handling
-    const historyBtn = document.getElementById('historyBtn');
-    const sidebar = document.getElementById('historySidebar');
-    
-    historyBtn?.addEventListener('click', () => {
-        sidebar.classList.toggle('active');
-    });
-
+    // Close sidebar
     closeSidebar?.addEventListener('click', () => {
         sidebar.classList.remove('active');
-    });
-
-    // Close sidebar when clicking outside
-    document.addEventListener('click', (e) => {
-        if (!sidebar.contains(e.target) && !historyBtn.contains(e.target)) {
-            sidebar.classList.remove('active');
-        }
     });
 
     // Display lesson plan with expandable sections
