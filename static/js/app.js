@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form submission
     lessonForm?.addEventListener('submit', async function(e) {
-        e.preventDefault(); // Prevent form submission from reloading the page
+        e.preventDefault();
 
         if (!selectedTemplate) {
             alert('Please select a template first');
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Display lesson plan
-
+    
     // Initial history load
     loadHistory();
 });
