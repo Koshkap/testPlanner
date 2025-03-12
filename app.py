@@ -3,7 +3,8 @@ import json
 from flask import Flask, render_template, request, jsonify, make_response, redirect, url_for, flash, session
 from openai import OpenAI
 from functools import wraps
-from auth import SupabaseAuth
+from auth import SupabaseAuth, User
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import logging
 
 # Configure logging
@@ -24,18 +25,21 @@ except Exception as e:
     logger.error(f"Failed to initialize services: {str(e)}")
     raise
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('user'):
-            flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+# Setup Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message_category = 'warning'
+
+@login_manager.user_loader
+def load_user(user_id):
+    if not session.get('user'):
+        return None
+    return User(session['user'])
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if session.get('user'):
+    if current_user.is_authenticated:
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -49,10 +53,12 @@ def login():
         try:
             result = auth.sign_in(email, password)
             if result['success']:
+                user = result['user']
                 session['user'] = {
-                    'id': result['user'].id,
-                    'email': result['user'].email
+                    'id': user.id,
+                    'email': user.email
                 }
+                login_user(user)
                 flash('Successfully logged in!', 'success')
                 return redirect(url_for('index'))
             else:
@@ -65,7 +71,7 @@ def login():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    if session.get('user'):
+    if current_user.is_authenticated:
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -90,11 +96,13 @@ def signup():
     return render_template('signup.html')
 
 @app.route('/logout')
+@login_required
 def logout():
     try:
         auth.sign_out()
     except Exception as e:
         logger.error(f"Logout error: {str(e)}")
+    logout_user()
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))

@@ -2,8 +2,14 @@ import os
 import logging
 from supabase import create_client, Client
 from flask import session
+from flask_login import UserMixin
 
 logger = logging.getLogger(__name__)
+
+class User(UserMixin):
+    def __init__(self, user_data):
+        self.id = user_data.get('id')
+        self.email = user_data.get('email')
 
 class SupabaseAuth:
     def __init__(self):
@@ -55,11 +61,22 @@ class SupabaseAuth:
                 "email": email,
                 "password": password
             })
+
             if not response.user:
                 logger.error("Invalid credentials: No user data returned")
                 return {"success": False, "error": "Invalid credentials"}
+
+            user_data = {
+                'id': response.user.id,
+                'email': response.user.email,
+            }
+
             logger.info("User signed in successfully")
-            return {"success": True, "session": response.session, "user": response.user}
+            return {
+                "success": True, 
+                "user": User(user_data),
+                "session": response.session
+            }
         except Exception as e:
             logger.error(f"Sign in error: {str(e)}")
             return {"success": False, "error": str(e)}
