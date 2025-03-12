@@ -5,8 +5,12 @@ document.addEventListener('DOMContentLoaded', function() {
         new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
+    // Initialize modals
     const templateModalEl = document.getElementById('templateModal');
-    const templateModal = new bootstrap.Modal(templateModalEl);
+    const templateModal = new bootstrap.Modal(templateModalEl, {
+        backdrop: 'static',
+        keyboard: false
+    });
     const subtemplateModal = new bootstrap.Modal(document.getElementById('subtemplateModal'));
     const personalizationModal = new bootstrap.Modal(document.getElementById('personalizationModal'));
 
@@ -14,29 +18,34 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedTemplate = '';
     let currentSubtemplate = '';
 
-    // Show template modal on page load if no template is selected
-    if (!selectedTemplate) {
-        templateModal.show();
-    }
-
     // DOM elements
     const templateCards = document.querySelectorAll('.template-card');
     const selectedTemplateDisplay = document.getElementById('selectedTemplate');
     const subtemplateButton = document.getElementById('subtemplateButton');
-    const subtemplateContent = document.getElementById('subtemplateContent');
     const lessonForm = document.getElementById('lessonForm');
     const lessonOutput = document.getElementById('lessonPlanOutput');
     const sidebar = document.getElementById('historySidebar');
     const closeSidebar = document.getElementById('closeSidebar');
 
+    // Show template modal on page load
+    if (window.location.pathname === '/app') {
+        templateModal.show();
+    }
+
     // Template selection
     templateCards.forEach(card => {
         card.addEventListener('click', () => {
-            selectedTemplate = card.dataset.template;
+            const template = card.dataset.template;
+            if (!template) return;
+
+            selectedTemplate = template;
             templateCards.forEach(c => c.classList.remove('selected'));
             card.classList.add('selected');
-            selectedTemplateDisplay.textContent = card.querySelector('h4').textContent;
-            updateSubtemplates(selectedTemplate);
+
+            if (selectedTemplateDisplay) {
+                selectedTemplateDisplay.textContent = card.querySelector('h4').textContent;
+            }
+
             templateModal.hide();
         });
     });
@@ -136,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             subject: this.elements.subject.value,
             grade: document.querySelector('[name="grade"]')?.value || '',
             duration: document.querySelector('[name="duration"]')?.value || '',
-            requirements: document.querySelector('[name="requirements"]')?.value || ''
+            objectives: document.querySelector('[name="requirements"]')?.value || ''
         };
 
         try {
@@ -200,15 +209,15 @@ document.addEventListener('DOMContentLoaded', function() {
         loadHistory();
     };
 
-    //Added function to load lesson plans from history.  This assumes loadLessonPlan function exists elsewhere and handles the loading logic.
-    const loadLessonPlan = (index) => {
+    // Load lesson plan from history
+    window.loadLessonPlan = (index) => {
         const history = JSON.parse(localStorage.getItem('lessonHistory') || '[]');
         if (index >= 0 && index < history.length) {
             displayLessonPlan(history[index]);
         } else {
             console.error("Invalid lesson plan index");
         }
-    }
+    };
 
     // Initial history load
     loadHistory();
