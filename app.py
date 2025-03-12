@@ -1,52 +1,14 @@
 import os
 import json
-from flask import Flask, render_template, request, jsonify, make_response, session, flash, redirect, url_for
+from flask import Flask, render_template, request, jsonify, make_response
 from openai import OpenAI
-from auth import login_required
-from routes.auth import auth_bp
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-import logging
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-# Database setup
-class Base(DeclarativeBase):
-    pass
-
-db = SQLAlchemy(model_class=Base)
-
-# Create Flask app
 app = Flask(__name__)
-
-# Configure app
 app.secret_key = os.environ.get("SESSION_SECRET")
-if not app.secret_key:
-    logger.error("SESSION_SECRET environment variable not set")
-    raise ValueError("SESSION_SECRET must be set")
 
-# Configure the SQLAlchemy part of the app
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
-
-# Initialize SQLAlchemy with app
-db.init_app(app)
-
-# Register blueprints
-app.register_blueprint(auth_bp, url_prefix='/auth')
-
-# Initialize OpenAI client
+# the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+# do not change this unless explicitly requested by the user
 openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
-# Create all database tables
-with app.app_context():
-    import models  # Import models here to avoid circular imports
-    db.create_all()
 
 LESSON_TEMPLATES = {
     "lesson": {
@@ -122,12 +84,9 @@ LESSON_TEMPLATES = {
 
 @app.route('/')
 def landing():
-    if 'user' in session:
-        return redirect(url_for('index'))
     return render_template('landing.html')
 
 @app.route('/app')
-@login_required
 def index():
     return render_template('index.html', templates=LESSON_TEMPLATES)
 
@@ -138,7 +97,6 @@ def add_cors_headers(response):
     return response
 
 @app.route('/generate', methods=['POST', 'OPTIONS'])
-@login_required
 def generate_lesson():
     if request.method == 'OPTIONS':
         return add_cors_headers(make_response())
@@ -189,7 +147,6 @@ def generate_lesson():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/generate_resources', methods=['POST'])
-@login_required
 def generate_resources():
     try:
         data = request.json
