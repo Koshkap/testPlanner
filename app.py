@@ -1,92 +1,110 @@
 import os
 import json
-from flask import Flask, render_template, request, jsonify, make_response
+from flask import Flask, render_template, request, jsonify, make_response, redirect, url_for, flash, session
 from openai import OpenAI
+from functools import wraps
+from auth import SupabaseAuth
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET")
+if not app.secret_key:
+    raise ValueError("SESSION_SECRET environment variable is required")
 
-# the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-# do not change this unless explicitly requested by the user
-openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+try:
+    # Initialize authentication
+    auth = SupabaseAuth()
+    # Initialize OpenAI client
+    openai = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+except Exception as e:
+    logger.error(f"Failed to initialize services: {str(e)}")
+    raise
 
-LESSON_TEMPLATES = {
-    "lesson": {
-        "description": "Create comprehensive lesson plans with clear objectives, activities, and methods",
-        "subtemplates": {
-            "Basic Frameworks": [
-                "5 E's Lesson Plan",
-                "Lesson Seed", 
-                "Horizontal Lesson Planner",
-                "SPARK Lesson"
-            ],
-            "Learning Approaches": [
-                "Student-Centered Approach",
-                "Project Based Learning",
-                "Team Based Activity", 
-                "Universal Design for Learning"
-            ],
-            "Content Organization": [
-                "Unit Plan",
-                "Book Summary",
-                "Vocabulary List",
-                "Notes Outline"
-            ],
-            "Special Focus": [
-                "STEM Project",
-                "Technology Integration", 
-                "Lab + Material List",
-                "Learning Situations"
-            ]
-        }
-    },
-    "assessment": {
-        "description": "Generate assessment materials, rubrics, and evaluation tools",
-        "subtemplates": {
-            "Question Types": [
-                "Multiple Choice Questions",
-                "Word Problems",
-                "Fill In The Blank", 
-                "True/False Questions"
-            ],
-            "Evaluation Tools": [
-                "Analytic Rubric",
-                "Holistic Rubric",
-                "Assessment Outline",
-                "Evidence Statements" 
-            ]
-        }
-    },
-    "feedback": {
-        "description": "Design engaging activities and feedback mechanisms",
-        "subtemplates": {
-            "Interactive Activities": [
-                "Think-Pair-Share",
-                "Jigsaw Activity",
-                "Round Robin",
-                "4 Corners"
-            ],
-            "Learning Games": [
-                "Bingo Style",
-                "Jeopardy Style",
-                "Quiz Quiz Trade",
-                "Escape Room"
-            ],
-            "Engagement Tools": [
-                "Class Poll",
-                "Self-Assessment",
-                "Reflective Journaling",
-                "Mad Lib"
-            ]
-        }
-    }
-}
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('user'):
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if session.get('user'):
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            flash('Please provide both email and password.', 'danger')
+            return render_template('login.html')
+
+        try:
+            result = auth.sign_in(email, password)
+            if result['success']:
+                session['user'] = {
+                    'id': result['user'].id,
+                    'email': result['user'].email
+                }
+                flash('Successfully logged in!', 'success')
+                return redirect(url_for('index'))
+            else:
+                flash(result.get('error', 'Invalid email or password.'), 'danger')
+        except Exception as e:
+            logger.error(f"Login error: {str(e)}")
+            flash('An error occurred during login. Please try again.', 'danger')
+
+    return render_template('login.html')
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if session.get('user'):
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+
+        if not email or not password:
+            flash('Please provide both email and password.', 'danger')
+            return render_template('signup.html')
+
+        try:
+            result = auth.sign_up(email, password)
+            if result['success']:
+                flash('Account created successfully! Please log in.', 'success')
+                return redirect(url_for('login'))
+            else:
+                flash(result.get('error', 'Error creating account.'), 'danger')
+        except Exception as e:
+            logger.error(f"Signup error: {str(e)}")
+            flash('An error occurred during signup. Please try again.', 'danger')
+
+    return render_template('signup.html')
+
+@app.route('/logout')
+def logout():
+    try:
+        auth.sign_out()
+    except Exception as e:
+        logger.error(f"Logout error: {str(e)}")
+    session.clear()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
 
 @app.route('/')
 def landing():
     return render_template('landing.html')
 
 @app.route('/app')
+@login_required
 def index():
     return render_template('index.html', templates=LESSON_TEMPLATES)
 
@@ -165,3 +183,75 @@ def generate_resources():
         return jsonify(resources)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+LESSON_TEMPLATES = {
+    "lesson": {
+        "description": "Create comprehensive lesson plans with clear objectives, activities, and methods",
+        "subtemplates": {
+            "Basic Frameworks": [
+                "5 E's Lesson Plan",
+                "Lesson Seed", 
+                "Horizontal Lesson Planner",
+                "SPARK Lesson"
+            ],
+            "Learning Approaches": [
+                "Student-Centered Approach",
+                "Project Based Learning",
+                "Team Based Activity", 
+                "Universal Design for Learning"
+            ],
+            "Content Organization": [
+                "Unit Plan",
+                "Book Summary",
+                "Vocabulary List",
+                "Notes Outline"
+            ],
+            "Special Focus": [
+                "STEM Project",
+                "Technology Integration", 
+                "Lab + Material List",
+                "Learning Situations"
+            ]
+        }
+    },
+    "assessment": {
+        "description": "Generate assessment materials, rubrics, and evaluation tools",
+        "subtemplates": {
+            "Question Types": [
+                "Multiple Choice Questions",
+                "Word Problems",
+                "Fill In The Blank", 
+                "True/False Questions"
+            ],
+            "Evaluation Tools": [
+                "Analytic Rubric",
+                "Holistic Rubric",
+                "Assessment Outline",
+                "Evidence Statements" 
+            ]
+        }
+    },
+    "feedback": {
+        "description": "Design engaging activities and feedback mechanisms",
+        "subtemplates": {
+            "Interactive Activities": [
+                "Think-Pair-Share",
+                "Jigsaw Activity",
+                "Round Robin",
+                "4 Corners"
+            ],
+            "Learning Games": [
+                "Bingo Style",
+                "Jeopardy Style",
+                "Quiz Quiz Trade",
+                "Escape Room"
+            ],
+            "Engagement Tools": [
+                "Class Poll",
+                "Self-Assessment",
+                "Reflective Journaling",
+                "Mad Lib"
+            ]
+        }
+    }
+}

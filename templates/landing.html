@@ -9,6 +9,24 @@
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 </head>
 <body class="landing-page">
+    <!-- Add Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('landing') }}">
+                <i class="fas fa-chalkboard-teacher"></i> AI Lesson Planner
+            </a>
+            <div class="ms-auto">
+                {% if session.get('user') %}
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-primary me-2">Dashboard</a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary me-2">Login</a>
+                    <a href="{{ url_for('signup') }}" class="btn btn-primary">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
     <!-- Hero Section -->
     <header class="hero py-5">
         <div class="container">
