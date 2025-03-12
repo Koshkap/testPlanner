@@ -7,12 +7,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize modals
     const templateModalEl = document.getElementById('templateModal');
+    if (!templateModalEl) {
+        console.error('Template modal element not found');
+        return;
+    }
+
     const templateModal = new bootstrap.Modal(templateModalEl, {
         backdrop: 'static',
         keyboard: false
     });
-    const subtemplateModal = new bootstrap.Modal(document.getElementById('subtemplateModal'));
-    const personalizationModal = new bootstrap.Modal(document.getElementById('personalizationModal'));
 
     // Template variables
     let selectedTemplate = '';
@@ -21,14 +24,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM elements
     const templateCards = document.querySelectorAll('.template-card');
     const selectedTemplateDisplay = document.getElementById('selectedTemplate');
-    const subtemplateButton = document.getElementById('subtemplateButton');
     const lessonForm = document.getElementById('lessonForm');
     const lessonOutput = document.getElementById('lessonPlanOutput');
     const sidebar = document.getElementById('historySidebar');
     const closeSidebar = document.getElementById('closeSidebar');
 
-    // Show template modal on page load
+    console.log('Initial setup complete:', {
+        templateCardsCount: templateCards.length,
+        hasSelectedTemplateDisplay: !!selectedTemplateDisplay,
+        hasLessonForm: !!lessonForm,
+        pathname: window.location.pathname
+    });
+
+    // Show template modal on page load for /app route
     if (window.location.pathname === '/app') {
+        console.log('Showing template modal');
         templateModal.show();
     }
 
@@ -36,7 +46,12 @@ document.addEventListener('DOMContentLoaded', function() {
     templateCards.forEach(card => {
         card.addEventListener('click', () => {
             const template = card.dataset.template;
-            if (!template) return;
+            console.log('Template card clicked:', template);
+
+            if (!template) {
+                console.error('No template data attribute found');
+                return;
+            }
 
             selectedTemplate = template;
             templateCards.forEach(c => c.classList.remove('selected'));
@@ -44,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (selectedTemplateDisplay) {
                 selectedTemplateDisplay.textContent = card.querySelector('h4').textContent;
+                console.log('Updated selected template display:', selectedTemplateDisplay.textContent);
             }
 
             templateModal.hide();
@@ -52,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Change template button
     document.getElementById('changeTemplate')?.addEventListener('click', () => {
+        console.log('Change template clicked');
         templateModal.show();
     });
 
@@ -64,8 +81,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Display lesson plan with expandable sections
     function displayLessonPlan(data) {
+        console.log('Displaying lesson plan:', data);
+
+        if (!data || typeof data !== 'object') {
+            console.error('Invalid lesson plan data');
+            return;
+        }
+
         if (!data.objectives || !Array.isArray(data.objectives)) {
-            console.error('Invalid objectives data:', data.objectives);
+            console.warn('Invalid objectives data:', data.objectives);
             data.objectives = ['No objectives specified'];
         }
 
@@ -78,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="section-content collapse">
                     <div class="section-summary text-muted mb-2">
-                        ${Array.isArray(summary) ? summary[0] : ''}
+                        ${Array.isArray(summary) ? summary[0] || '' : ''}
                     </div>
                     <div class="section-details">
                         ${content}
@@ -121,8 +145,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission
     lessonForm?.addEventListener('submit', async function(e) {
         e.preventDefault();
+        console.log('Form submitted');
 
         if (!selectedTemplate) {
+            console.error('No template selected');
             alert('Please select a template first');
             templateModal.show();
             return;
@@ -148,6 +174,8 @@ document.addEventListener('DOMContentLoaded', function() {
             objectives: document.querySelector('[name="requirements"]')?.value || ''
         };
 
+        console.log('Sending form data:', formData);
+
         try {
             const response = await fetch('/generate', {
                 method: 'POST',
@@ -158,14 +186,17 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to generate plan');
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
+            console.log('Received response:', data);
+
             displayLessonPlan(data);
             saveToHistory(data, formData);
 
         } catch (error) {
+            console.error('Error:', error);
             lessonOutput.innerHTML = `
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-circle"></i>
@@ -188,10 +219,10 @@ document.addEventListener('DOMContentLoaded', function() {
             historyContainer.innerHTML = history.map((item, index) => `
                 <div class="list-group-item list-group-item-action" role="button" onclick="loadLessonPlan(${index})">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-1">${item.title}</h5>
+                        <h5 class="mb-1">${item.title || 'Untitled Plan'}</h5>
                         <small>${new Date(item.timestamp).toLocaleDateString()}</small>
                     </div>
-                    <p class="mb-1">${item.subject}</p>
+                    <p class="mb-1">${item.subject || 'No subject'}</p>
                 </div>
             `).join('') || '<p class="text-muted p-3">No plans yet</p>';
         }
@@ -199,23 +230,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Save to history
     const saveToHistory = (lessonPlan, formData) => {
-        const history = JSON.parse(localStorage.getItem('lessonHistory') || '[]');
-        history.unshift({
-            ...lessonPlan,
-            ...formData,
-            timestamp: new Date().toISOString()
-        });
-        localStorage.setItem('lessonHistory', JSON.stringify(history.slice(0, 10)));
-        loadHistory();
+        try {
+            const history = JSON.parse(localStorage.getItem('lessonHistory') || '[]');
+            history.unshift({
+                ...lessonPlan,
+                ...formData,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('lessonHistory', JSON.stringify(history.slice(0, 10)));
+            loadHistory();
+        } catch (error) {
+            console.error('Error saving to history:', error);
+        }
     };
 
     // Load lesson plan from history
     window.loadLessonPlan = (index) => {
-        const history = JSON.parse(localStorage.getItem('lessonHistory') || '[]');
-        if (index >= 0 && index < history.length) {
-            displayLessonPlan(history[index]);
-        } else {
-            console.error("Invalid lesson plan index");
+        try {
+            const history = JSON.parse(localStorage.getItem('lessonHistory') || '[]');
+            if (index >= 0 && index < history.length) {
+                displayLessonPlan(history[index]);
+            } else {
+                console.error("Invalid lesson plan index");
+            }
+        } catch (error) {
+            console.error('Error loading lesson plan:', error);
         }
     };
 
