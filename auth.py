@@ -47,16 +47,21 @@ class SupabaseAuth:
             })
             logger.info(f"Sign up response received: {type(response)}")
 
-            if hasattr(response, 'error') and response.error:
-                logger.error(f"Supabase signup error: {response.error}")
-                return {"success": False, "error": str(response.error)}
+            # Handle response as dictionary
+            response_dict = response.model_dump() if hasattr(response, 'model_dump') else response
+            logger.info(f"Response structure: {list(response_dict.keys())}")
 
-            if not response.user:
+            if response_dict.get('error'):
+                logger.error(f"Supabase signup error: {response_dict['error']}")
+                return {"success": False, "error": str(response_dict['error'])}
+
+            user_data = response_dict.get('user', {})
+            if not user_data:
                 logger.error("Failed to create user: No user data returned")
                 return {"success": False, "error": "Failed to create user"}
 
             logger.info("User signed up successfully")
-            return {"success": True, "user": response.user}
+            return {"success": True, "user": User(user_data)}
         except Exception as e:
             logger.error(f"Sign up error: {str(e)}")
             return {"success": False, "error": str(e)}
@@ -70,24 +75,29 @@ class SupabaseAuth:
             })
             logger.info(f"Sign in response received: {type(response)}")
 
-            if hasattr(response, 'error') and response.error:
-                logger.error(f"Supabase login error: {response.error}")
-                return {"success": False, "error": str(response.error)}
+            # Handle response as dictionary
+            response_dict = response.model_dump() if hasattr(response, 'model_dump') else response
+            logger.info(f"Response structure: {list(response_dict.keys())}")
 
-            if not response.user:
+            if response_dict.get('error'):
+                logger.error(f"Supabase login error: {response_dict['error']}")
+                return {"success": False, "error": str(response_dict['error'])}
+
+            user_data = response_dict.get('user', {})
+            if not user_data:
                 logger.error("Invalid credentials: No user data returned")
                 return {"success": False, "error": "Invalid credentials"}
 
             user_data = {
-                'id': response.user.id,
-                'email': response.user.email,
+                'id': user_data.get('id'),
+                'email': user_data.get('email'),
             }
 
             logger.info("User signed in successfully")
             return {
                 "success": True, 
                 "user": User(user_data),
-                "session": response.session
+                "session": response_dict.get('session', {})
             }
         except Exception as e:
             logger.error(f"Sign in error: {str(e)}")
