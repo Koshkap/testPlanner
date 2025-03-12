@@ -45,9 +45,16 @@ class SupabaseAuth:
                 "email": email,
                 "password": password
             })
+            logger.info(f"Sign up response received: {type(response)}")
+
+            if hasattr(response, 'error') and response.error:
+                logger.error(f"Supabase signup error: {response.error}")
+                return {"success": False, "error": str(response.error)}
+
             if not response.user:
                 logger.error("Failed to create user: No user data returned")
                 return {"success": False, "error": "Failed to create user"}
+
             logger.info("User signed up successfully")
             return {"success": True, "user": response.user}
         except Exception as e:
@@ -61,6 +68,11 @@ class SupabaseAuth:
                 "email": email,
                 "password": password
             })
+            logger.info(f"Sign in response received: {type(response)}")
+
+            if hasattr(response, 'error') and response.error:
+                logger.error(f"Supabase login error: {response.error}")
+                return {"success": False, "error": str(response.error)}
 
             if not response.user:
                 logger.error("Invalid credentials: No user data returned")
