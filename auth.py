@@ -80,13 +80,14 @@ class SupabaseAuth:
             logger.info(f"Response structure: {list(response_dict.keys())}")
 
             if response_dict.get('error'):
-                logger.error(f"Supabase login error: {response_dict['error']}")
-                return {"success": False, "error": str(response_dict['error'])}
+                error_msg = str(response_dict['error'])
+                logger.error(f"Supabase login error: {error_msg}")
+                return {"success": False, "error": error_msg}
 
             user_data = response_dict.get('user', {})
             if not user_data:
                 logger.error("Invalid credentials: No user data returned")
-                return {"success": False, "error": "Invalid credentials"}
+                return {"success": False, "error": "No user data returned. Account might not exist."}
 
             user_data = {
                 'id': user_data.get('id'),
@@ -100,8 +101,16 @@ class SupabaseAuth:
                 "session": response_dict.get('session', {})
             }
         except Exception as e:
-            logger.error(f"Sign in error: {str(e)}")
-            return {"success": False, "error": str(e)}
+            error_msg = str(e)
+            logger.error(f"Sign in error: {error_msg}")
+            
+            # Provide more user-friendly error messages
+            if "invalid_credentials" in error_msg:
+                return {"success": False, "error": "Invalid email or password. Please check your credentials or create an account if you haven't already."}
+            elif "Invalid login credentials" in error_msg:
+                return {"success": False, "error": "Invalid email or password. Please check your credentials or create an account if you haven't already."}
+            else:
+                return {"success": False, "error": error_msg}
 
     def sign_out(self) -> dict:
         try:

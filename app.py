@@ -62,7 +62,12 @@ def login():
                 flash('Successfully logged in!', 'success')
                 return redirect(url_for('index'))
             else:
-                flash(result.get('error', 'Invalid email or password.'), 'danger')
+                error_msg = result.get('error', 'Invalid email or password.')
+                logger.warning(f"Login failed: {error_msg}")
+                flash(error_msg, 'danger')
+                # Add debug information
+                if app.debug:
+                    flash('Debug: Make sure you have created an account first using the signup page.', 'warning')
         except Exception as e:
             logger.error(f"Login error: {str(e)}")
             flash('An error occurred during login. Please try again.', 'danger')
@@ -82,13 +87,27 @@ def signup():
             flash('Please provide both email and password.', 'danger')
             return render_template('signup.html')
 
+        # Validate password strength
+        if len(password) < 6:
+            flash('Password must be at least 6 characters long.', 'danger')
+            return render_template('signup.html')
+
         try:
             result = auth.sign_up(email, password)
             if result['success']:
                 flash('Account created successfully! Please log in.', 'success')
                 return redirect(url_for('login'))
             else:
-                flash(result.get('error', 'Error creating account.'), 'danger')
+                error_msg = result.get('error', 'Error creating account.')
+                logger.warning(f"Signup failed: {error_msg}")
+                
+                # Provide more user-friendly error messages
+                if 'rate_limit' in error_msg.lower():
+                    flash('Too many signup attempts. Please try again later.', 'danger')
+                elif 'already' in error_msg.lower() and 'exists' in error_msg.lower():
+                    flash('An account with this email already exists. Please log in instead.', 'danger')
+                else:
+                    flash(error_msg, 'danger')
         except Exception as e:
             logger.error(f"Signup error: {str(e)}")
             flash('An error occurred during signup. Please try again.', 'danger')
