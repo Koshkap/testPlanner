@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Bootstrap components
+    // Initialize tooltips
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.forEach(function (tooltipTriggerEl) {
         new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
+    // Initialize modals
     const templateModalEl = document.getElementById('templateModal');
     const templateModal = new bootstrap.Modal(templateModalEl);
     const subtemplateModal = new bootstrap.Modal(document.getElementById('subtemplateModal'));
@@ -47,6 +48,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Sidebar functionality
+    const sidebar = document.getElementById('historySidebar');
+    const closeSidebar = document.getElementById('closeSidebar');
+
     if (sidebar && closeSidebar) {
         closeSidebar.addEventListener('click', () => {
             sidebar.classList.remove('active');
@@ -200,16 +204,8 @@ document.addEventListener('DOMContentLoaded', function() {
         loadHistory();
     };
 
-    //Added function to load lesson plans from history.  This assumes loadLessonPlan function exists elsewhere and handles the loading logic.
-    const loadLessonPlan = (index) => {
-        const history = JSON.parse(localStorage.getItem('lessonHistory') || '[]');
-        if (index >= 0 && index < history.length) {
-            displayLessonPlan(history[index]);
-        } else {
-            console.error("Invalid lesson plan index");
-        }
-    }
-
+    // Display lesson plan
+    
     // Initial history load
     loadHistory();
 });

@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask, render_template, request, jsonify, make_response
+from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
 
 app = Flask(__name__)
@@ -90,16 +90,8 @@ def landing():
 def index():
     return render_template('index.html', templates=LESSON_TEMPLATES)
 
-def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    return response
-
-@app.route('/generate', methods=['POST', 'OPTIONS'])
+@app.route('/generate', methods=['POST'])
 def generate_lesson():
-    if request.method == 'OPTIONS':
-        return add_cors_headers(make_response())
     try:
         data = request.json
         template_type = data.get('template')
