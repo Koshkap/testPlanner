@@ -13,4 +13,5 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "supabase>=2.13.0",
     "flask-wtf>=1.2.2",
+    "stripe>=11.6.0",
 ]

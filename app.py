@@ -5,6 +5,7 @@ from openai import OpenAI
 from functools import wraps
 from auth import SupabaseAuth, User
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+import stripe
 import logging
 
 # Configure logging
@@ -15,6 +16,11 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET")
 if not app.secret_key:
     raise ValueError("SESSION_SECRET environment variable is required")
+
+# Initialize Stripe
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
+STRIPE_PRICE_ID = "price_XXXXX"  # You'll need to replace this with your actual price ID
+YOUR_DOMAIN = os.environ.get('REPLIT_DEV_DOMAIN', 'localhost:5000')
 
 try:
     # Initialize authentication
@@ -31,16 +37,106 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message_category = 'warning'
 
+def check_subscription():
+    """Check if the current user has an active subscription"""
+    if not current_user.is_authenticated:
+        return False
+
+    try:
+        # Get customer ID from session or query Stripe
+        customer_id = session.get('stripe_customer_id')
+        if not customer_id:
+            # Search for customer by email
+            customers = stripe.Customer.list(email=current_user.email, limit=1)
+            if customers.data:
+                customer_id = customers.data[0].id
+                session['stripe_customer_id'] = customer_id
+            else:
+                return False
+
+        # Check for active subscription
+        subscriptions = stripe.Subscription.list(
+            customer=customer_id,
+            status='active',
+            limit=1
+        )
+        return len(subscriptions.data) > 0
+    except Exception as e:
+        logger.error(f"Error checking subscription: {str(e)}")
+        return False
+
+def subscription_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not check_subscription():
+            flash('Please subscribe to access this feature.', 'warning')
+            return redirect(url_for('pricing'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 @login_manager.user_loader
 def load_user(user_id):
     if not session.get('user'):
         return None
     return User(session['user'])
 
+@app.route('/create-checkout-session', methods=['POST'])
+@login_required
+def create_checkout_session():
+    try:
+        # Get or create customer
+        customer_email = current_user.email
+        customers = stripe.Customer.list(email=customer_email, limit=1)
+
+        if customers.data:
+            customer = customers.data[0]
+        else:
+            customer = stripe.Customer.create(email=customer_email)
+
+        session['stripe_customer_id'] = customer.id
+
+        checkout_session = stripe.checkout.Session.create(
+            customer=customer.id,
+            line_items=[{
+                'price': STRIPE_PRICE_ID,
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=f'https://{YOUR_DOMAIN}/subscription-success',
+            cancel_url=f'https://{YOUR_DOMAIN}/pricing',
+        )
+        return redirect(checkout_session.url, code=303)
+    except Exception as e:
+        logger.error(f"Error creating checkout session: {str(e)}")
+        flash('An error occurred while processing your request.', 'danger')
+        return redirect(url_for('pricing'))
+
+@app.route('/subscription-success')
+@login_required
+def subscription_success():
+    flash('Thank you for subscribing!', 'success')
+    return redirect(url_for('app_index'))
+
+@app.route('/pricing')
+def pricing():
+    return render_template('pricing.html', is_subscribed=check_subscription() if current_user.is_authenticated else False)
+
+@app.route('/')
+def landing():
+    if current_user.is_authenticated and check_subscription():
+        return redirect(url_for('app_index'))
+    return render_template('landing.html')
+
+@app.route('/app')
+@login_required
+@subscription_required
+def app_index():
+    return render_template('index.html', templates=LESSON_TEMPLATES)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('landing'))
 
     if request.method == 'POST':
         email = request.form.get('email')
@@ -58,14 +154,14 @@ def login():
         }
         user = User(session['user'])
         login_user(user)
-        return redirect(url_for('index'))
+        return redirect(url_for('landing'))
 
     return render_template('login.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('landing'))
 
     if request.method == 'POST':
         email = request.form.get('email')
@@ -88,7 +184,7 @@ def signup():
             else:
                 error_msg = result.get('error', 'Error creating account.')
                 logger.warning(f"Signup failed: {error_msg}")
-                
+
                 # Provide more user-friendly error messages
                 if 'rate_limit' in error_msg.lower():
                     flash('Too many signup attempts. Please try again later.', 'danger')
@@ -112,22 +208,8 @@ def logout():
     logout_user()
     session.clear()
     flash('You have been logged out.', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('landing'))
 
-@app.route('/')
-def landing():
-    return render_template('landing.html')
-
-@app.route('/app')
-@login_required
-def index():
-    return render_template('index.html', templates=LESSON_TEMPLATES)
-
-def add_cors_headers(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-    return response
 
 @app.route('/generate', methods=['POST', 'OPTIONS'])
 def generate_lesson():
@@ -198,6 +280,12 @@ def generate_resources():
         return jsonify(resources)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
 
 LESSON_TEMPLATES = {
     "lesson": {
