@@ -50,9 +50,13 @@ login_manager.login_view = 'login'
 login_manager.login_message_category = 'warning'
 
 def check_subscription():
-    """Check if the current user has an active subscription"""
+    """Check if the current user has an active subscription or is admin"""
     if not current_user.is_authenticated:
         return False
+
+    # Admin users have access to all features
+    if current_user.is_admin:
+        return True
 
     try:
         # Get customer ID from session or query Stripe
@@ -80,6 +84,8 @@ def check_subscription():
 def subscription_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        if current_user.is_admin:
+            return f(*args, **kwargs)
         if not check_subscription():
             flash('Please subscribe to access this feature.', 'warning')
             return redirect(url_for('pricing'))
@@ -186,6 +192,11 @@ def login():
             demo_email = os.environ.get('DEMO_ADMIN_EMAIL')
             demo_password = os.environ.get('DEMO_ADMIN_PASSWORD')
 
+            if not demo_email or not demo_password:
+                logger.error("Demo admin credentials not properly configured")
+                flash('Authentication system is not properly configured.', 'danger')
+                return render_template('login.html')
+
             if email == demo_email and password == demo_password:
                 logger.info(f"Admin login successful for: {email}")
                 # Create admin user session
@@ -198,7 +209,7 @@ def login():
                 login_user(user)
                 session['user'] = user_data
                 flash('Welcome, Admin!', 'success')
-                return redirect(url_for('landing'))
+                return redirect(url_for('app_index'))
 
             # Regular user authentication
             result = auth.sign_in(email, password)
@@ -423,3 +434,4 @@ LESSON_TEMPLATES = {
         }
     }
 }
+import json
