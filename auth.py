@@ -10,6 +10,19 @@ class User(UserMixin):
     def __init__(self, user_data):
         self.id = user_data.get('id')
         self.email = user_data.get('email')
+        self.is_admin = user_data.get('is_admin', False)
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
 
 class SupabaseAuth:
     def __init__(self):

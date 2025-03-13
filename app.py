@@ -181,15 +181,45 @@ def login():
             flash('Please provide both email and password.', 'danger')
             return render_template('login.html')
 
-        # Hard-coded authentication for testing
-        # This will allow any login to succeed for testing purposes
-        session['user'] = {
-            'id': '123',
-            'email': email
-        }
-        user = User(session['user'])
-        login_user(user)
-        return redirect(url_for('landing'))
+        try:
+            # Check if using demo admin credentials
+            demo_email = os.environ.get('DEMO_ADMIN_EMAIL')
+            demo_password = os.environ.get('DEMO_ADMIN_PASSWORD')
+
+            if email == demo_email and password == demo_password:
+                logger.info(f"Admin login successful for: {email}")
+                # Create admin user session
+                user_data = {
+                    'id': 'admin',
+                    'email': email,
+                    'is_admin': True
+                }
+                user = User(user_data)
+                login_user(user)
+                session['user'] = user_data
+                flash('Welcome, Admin!', 'success')
+                return redirect(url_for('landing'))
+
+            # Regular user authentication
+            result = auth.sign_in(email, password)
+            if result['success']:
+                user = result['user']
+                login_user(user)
+                session['user'] = {
+                    'id': user.id,
+                    'email': user.email,
+                    'is_admin': False
+                }
+                flash('Successfully logged in!', 'success')
+                return redirect(url_for('landing'))
+            else:
+                error_msg = result.get('error', 'Invalid credentials')
+                flash(error_msg, 'danger')
+                logger.warning(f"Failed login attempt for user: {email}")
+
+        except Exception as e:
+            logger.error(f"Login error: {str(e)}")
+            flash('An error occurred during login. Please try again.', 'danger')
 
     return render_template('login.html')
 
