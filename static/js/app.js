@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Form submission
     lessonForm?.addEventListener('submit', async function(e) {
-        e.preventDefault();
+        e.preventDefault(); // Prevent form submission
         console.log('Form submitted');
 
         if (!selectedTemplate) {
