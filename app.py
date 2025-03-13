@@ -89,14 +89,20 @@ def create_checkout_session():
     try:
         # Get or create customer
         customer_email = current_user.email
-        customers = stripe.Customer.list(email=customer_email, limit=1)
+        logger.info(f"Creating checkout session for email: {customer_email}")
 
+        customers = stripe.Customer.list(email=customer_email, limit=1)
         if customers.data:
             customer = customers.data[0]
+            logger.info(f"Found existing customer with ID: {customer.id}")
         else:
             customer = stripe.Customer.create(email=customer_email)
+            logger.info(f"Created new customer with ID: {customer.id}")
 
         session['stripe_customer_id'] = customer.id
+
+        # Log the price ID we're using
+        logger.info(f"Using Stripe Price ID: {STRIPE_PRICE_ID}")
 
         # Create checkout session with subscription
         checkout_session = stripe.checkout.Session.create(
@@ -108,12 +114,23 @@ def create_checkout_session():
             mode='subscription',
             success_url=f'https://{YOUR_DOMAIN}/subscription-success',
             cancel_url=f'https://{YOUR_DOMAIN}/pricing',
+            allow_promotion_codes=True,
+            billing_address_collection='required',
         )
 
+        logger.info(f"Created checkout session: {checkout_session.id}")
         return redirect(checkout_session.url, code=303)
+    except stripe.error.InvalidRequestError as e:
+        logger.error(f"Stripe invalid request error: {str(e)}")
+        flash('Unable to process subscription. Please try again later.', 'danger')
+        return redirect(url_for('pricing'))
+    except stripe.error.StripeError as e:
+        logger.error(f"Stripe error: {str(e)}")
+        flash('An error occurred with the payment processor. Please try again later.', 'danger')
+        return redirect(url_for('pricing'))
     except Exception as e:
         logger.error(f"Error creating checkout session: {str(e)}")
-        flash('An error occurred while processing your request. Please try again later.', 'danger')
+        flash('An unexpected error occurred. Please try again later.', 'danger')
         return redirect(url_for('pricing'))
 
 @app.route('/subscription-success')
