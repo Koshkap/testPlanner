@@ -19,8 +19,11 @@ if not app.secret_key:
 
 # Initialize Stripe
 stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
-STRIPE_PRICE_ID = "price_XXXXX"  # You'll need to replace this with your actual price ID
+STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID")  # Updated to use environment variable
 YOUR_DOMAIN = os.environ.get('REPLIT_DEV_DOMAIN', 'localhost:5000')
+
+if not STRIPE_PRICE_ID:
+    raise ValueError("STRIPE_PRICE_ID environment variable is required")
 
 try:
     # Initialize authentication
