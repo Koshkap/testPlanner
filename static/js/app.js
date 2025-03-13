@@ -68,19 +68,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Save preferences debounced function
-    const debounce = (func, wait) => {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    };
-
-    // Function to save preferences
     const savePreferences = async (formData) => {
         try {
             const response = await fetch('/api/save_preferences', {
@@ -95,81 +82,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Failed to save preferences');
             }
 
-            // Show success message
-            const successMessage = document.createElement('div');
-            successMessage.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3';
-            successMessage.innerHTML = `
-                Preferences saved successfully
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `;
-            document.body.appendChild(successMessage);
+            // Show success toast
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification success';
+            toast.textContent = 'Preferences saved';
+            document.body.appendChild(toast);
 
-            // Remove the message after 3 seconds
+            // Remove toast after 3 seconds
             setTimeout(() => {
-                successMessage.remove();
+                toast.remove();
             }, 3000);
 
         } catch (error) {
             console.error('Error saving preferences:', error);
+            // Show error toast
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification error';
+            toast.textContent = 'Error saving preferences';
+            document.body.appendChild(toast);
+
+            // Remove toast after 3 seconds
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
         }
     };
-
-    // Debounced save preferences
-    const debouncedSavePreferences = debounce(savePreferences, 500);
 
     // Add input change listeners if form exists
     if (lessonForm) {
         const formInputs = lessonForm.querySelectorAll('input, select, textarea');
         formInputs.forEach(input => {
-            input.addEventListener('change', async (e) => {
-                e.preventDefault(); // Prevent any default form submission
-                e.stopPropagation(); // Stop event bubbling
-
+            input.addEventListener('change', (e) => {
                 const formData = {
                     subject: lessonForm.elements.subject.value,
                     grade: lessonForm.elements.grade?.value || '',
                     duration: lessonForm.elements.duration?.value || '',
                     objectives: lessonForm.elements.requirements?.value || ''
                 };
-
-                try {
-                    const response = await fetch('/api/save_preferences', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(formData)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Failed to save preferences');
-                    }
-
-                    // Show success toast
-                    const toast = document.createElement('div');
-                    toast.className = 'toast-notification success';
-                    toast.textContent = 'Preferences saved';
-                    document.body.appendChild(toast);
-
-                    // Remove toast after 3 seconds
-                    setTimeout(() => {
-                        toast.remove();
-                    }, 3000);
-
-                } catch (error) {
-                    console.error('Error saving preferences:', error);
-                    // Show error toast
-                    const toast = document.createElement('div');
-                    toast.className = 'toast-notification error';
-                    toast.textContent = 'Error saving preferences';
-                    document.body.appendChild(toast);
-
-                    // Remove toast after 3 seconds
-                    setTimeout(() => {
-                        toast.remove();
-                    }, 3000);
-                }
+                savePreferences(formData);
             });
+        });
+
+        // Prevent form submission reload
+        lessonForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent form submission
+            e.stopPropagation(); // Stop event bubbling
+            return false;
         });
     }
 
