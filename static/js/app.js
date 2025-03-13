@@ -169,14 +169,28 @@ document.addEventListener('DOMContentLoaded', function() {
             template: selectedTemplate,
             subtemplate: currentSubtemplate,
             subject: this.elements.subject.value,
-            grade: document.querySelector('[name="grade"]')?.value || '',
-            duration: document.querySelector('[name="duration"]')?.value || '',
-            objectives: document.querySelector('[name="requirements"]')?.value || ''
+            grade: this.elements.grade?.value || '',
+            duration: this.elements.duration?.value || '',
+            objectives: this.elements.requirements?.value || ''
         };
 
         console.log('Sending form data:', formData);
 
         try {
+            // Save preferences first
+            const preferencesResponse = await fetch('/api/save_preferences', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!preferencesResponse.ok) {
+                console.warn('Failed to save preferences:', await preferencesResponse.text());
+            }
+
+            // Generate lesson plan
             const response = await fetch('/generate', {
                 method: 'POST',
                 headers: {
@@ -210,6 +224,33 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.textContent = 'Generate Plan';
         }
     });
+
+    // Load saved preferences when page loads
+    async function loadUserPreferences() {
+        try {
+            const response = await fetch('/api/get_preferences');
+            if (response.ok) {
+                const preferences = await response.json();
+                if (preferences) {
+                    // Fill form fields with saved preferences
+                    const form = document.getElementById('lessonForm');
+                    if (form) {
+                        if (preferences.subject) form.elements.subject.value = preferences.subject;
+                        if (preferences.grade) form.elements.grade.value = preferences.grade;
+                        if (preferences.duration) form.elements.duration.value = preferences.duration;
+                        if (preferences.objectives) form.elements.requirements.value = preferences.objectives;
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error loading preferences:', error);
+        }
+    }
+
+    // Load preferences when page loads
+    if (document.getElementById('lessonForm')) {
+        loadUserPreferences();
+    }
 
     // Load history from localStorage
     const loadHistory = () => {

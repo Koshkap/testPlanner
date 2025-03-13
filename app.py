@@ -7,6 +7,8 @@ from auth import SupabaseAuth, User
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import stripe
 import logging
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -435,3 +437,65 @@ LESSON_TEMPLATES = {
     }
 }
 import json
+
+@app.route('/api/save_preferences', methods=['POST'])
+@login_required
+def save_preferences():
+    try:
+        data = request.json
+        user_email = current_user.email
+
+        conn = psycopg2.connect(os.environ['DATABASE_URL'])
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # Update or insert preferences
+        cur.execute("""
+            INSERT INTO lesson_preferences 
+                (user_email, subject, grade, duration, objectives, updated_at)
+            VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_email) 
+            DO UPDATE SET 
+                subject = EXCLUDED.subject,
+                grade = EXCLUDED.grade,
+                duration = EXCLUDED.duration,
+                objectives = EXCLUDED.objectives,
+                updated_at = CURRENT_TIMESTAMP
+        """, (user_email, data.get('subject'), data.get('grade'), 
+              data.get('duration'), data.get('objectives')))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logger.error(f"Error saving preferences: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/get_preferences', methods=['GET'])
+@login_required
+def get_preferences():
+    try:
+        user_email = current_user.email
+
+        conn = psycopg2.connect(os.environ['DATABASE_URL'])
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute("""
+            SELECT subject, grade, duration, objectives
+            FROM lesson_preferences
+            WHERE user_email = %s
+        """, (user_email,))
+
+        preferences = cur.fetchone()
+
+        cur.close()
+        conn.close()
+
+        return jsonify(preferences if preferences else {}), 200
+    except Exception as e:
+        logger.error(f"Error getting preferences: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)
