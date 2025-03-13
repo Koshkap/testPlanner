@@ -29,16 +29,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('historySidebar');
     const closeSidebar = document.getElementById('closeSidebar');
 
-    console.log('Initial setup complete:', {
-        templateCardsCount: templateCards.length,
-        hasSelectedTemplateDisplay: !!selectedTemplateDisplay,
-        hasLessonForm: !!lessonForm,
-        pathname: window.location.pathname
-    });
-
     // Show template modal on page load for /app route
     if (window.location.pathname === '/app') {
-        console.log('Showing template modal');
         templateModal.show();
     }
 
@@ -46,8 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
     templateCards.forEach(card => {
         card.addEventListener('click', () => {
             const template = card.dataset.template;
-            console.log('Template card clicked:', template);
-
             if (!template) {
                 console.error('No template data attribute found');
                 return;
@@ -59,7 +49,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (selectedTemplateDisplay) {
                 selectedTemplateDisplay.textContent = card.querySelector('h4').textContent;
-                console.log('Updated selected template display:', selectedTemplateDisplay.textContent);
             }
 
             templateModal.hide();
@@ -68,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Change template button
     document.getElementById('changeTemplate')?.addEventListener('click', () => {
-        console.log('Change template clicked');
         templateModal.show();
     });
 
@@ -79,10 +67,75 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Save preferences debounced function
+    const debounce = (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    };
+
+    // Function to save preferences
+    const savePreferences = async (formData) => {
+        try {
+            const response = await fetch('/api/save_preferences', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to save preferences');
+            }
+
+            // Show success message
+            const successMessage = document.createElement('div');
+            successMessage.className = 'alert alert-success alert-dismissible fade show position-fixed top-0 end-0 m-3';
+            successMessage.innerHTML = `
+                Preferences saved successfully
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(successMessage);
+
+            // Remove the message after 3 seconds
+            setTimeout(() => {
+                successMessage.remove();
+            }, 3000);
+
+        } catch (error) {
+            console.error('Error saving preferences:', error);
+        }
+    };
+
+    // Debounced save preferences
+    const debouncedSavePreferences = debounce(savePreferences, 500);
+
+    // Add input change listeners if form exists
+    if (lessonForm) {
+        const formInputs = lessonForm.querySelectorAll('input, select, textarea');
+        formInputs.forEach(input => {
+            input.addEventListener('change', (e) => {
+                e.preventDefault(); // Prevent any default form submission
+                const formData = {
+                    subject: lessonForm.elements.subject.value,
+                    grade: lessonForm.elements.grade?.value || '',
+                    duration: lessonForm.elements.duration?.value || '',
+                    objectives: lessonForm.elements.requirements?.value || ''
+                };
+                debouncedSavePreferences(formData);
+            });
+        });
+    }
+
     // Display lesson plan with expandable sections
     function displayLessonPlan(data) {
-        console.log('Displaying lesson plan:', data);
-
         if (!data || typeof data !== 'object') {
             console.error('Invalid lesson plan data');
             return;
@@ -145,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form submission
     lessonForm?.addEventListener('submit', async function(e) {
         e.preventDefault(); // Prevent form submission
-        console.log('Form submitted');
+        e.stopPropagation(); // Stop event propagation
 
         if (!selectedTemplate) {
             console.error('No template selected');
@@ -174,22 +227,7 @@ document.addEventListener('DOMContentLoaded', function() {
             objectives: this.elements.requirements?.value || ''
         };
 
-        console.log('Sending form data:', formData);
-
         try {
-            // Save preferences first
-            const preferencesResponse = await fetch('/api/save_preferences', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData)
-            });
-
-            if (!preferencesResponse.ok) {
-                console.warn('Failed to save preferences:', await preferencesResponse.text());
-            }
-
             // Generate lesson plan
             const response = await fetch('/generate', {
                 method: 'POST',
@@ -204,8 +242,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             const data = await response.json();
-            console.log('Received response:', data);
-
             displayLessonPlan(data);
             saveToHistory(data, formData);
 
