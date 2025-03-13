@@ -121,15 +121,54 @@ document.addEventListener('DOMContentLoaded', function() {
     if (lessonForm) {
         const formInputs = lessonForm.querySelectorAll('input, select, textarea');
         formInputs.forEach(input => {
-            input.addEventListener('change', (e) => {
+            input.addEventListener('change', async (e) => {
                 e.preventDefault(); // Prevent any default form submission
+                e.stopPropagation(); // Stop event bubbling
+
                 const formData = {
                     subject: lessonForm.elements.subject.value,
                     grade: lessonForm.elements.grade?.value || '',
                     duration: lessonForm.elements.duration?.value || '',
                     objectives: lessonForm.elements.requirements?.value || ''
                 };
-                debouncedSavePreferences(formData);
+
+                try {
+                    const response = await fetch('/api/save_preferences', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to save preferences');
+                    }
+
+                    // Show success toast
+                    const toast = document.createElement('div');
+                    toast.className = 'toast-notification success';
+                    toast.textContent = 'Preferences saved';
+                    document.body.appendChild(toast);
+
+                    // Remove toast after 3 seconds
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 3000);
+
+                } catch (error) {
+                    console.error('Error saving preferences:', error);
+                    // Show error toast
+                    const toast = document.createElement('div');
+                    toast.className = 'toast-notification error';
+                    toast.textContent = 'Error saving preferences';
+                    document.body.appendChild(toast);
+
+                    // Remove toast after 3 seconds
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 3000);
+                }
             });
         });
     }
