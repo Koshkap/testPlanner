@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 
+{% block title %}Pricing - AI Lesson Planner{% endblock %}
+
 {% block content %}
 <div class="container py-5">
     <div class="text-center mb-5">
@@ -47,9 +49,12 @@
                             <button class="btn btn-success btn-lg w-100 mb-3" disabled>
                                 Already Subscribed
                             </button>
+                            <a href="{{ url_for('app_index') }}" class="btn btn-outline-primary btn-lg w-100">
+                                Go to Dashboard
+                            </a>
                         {% else %}
                             <form action="{{ url_for('create_checkout_session') }}" method="POST">
-                                <button class="btn btn-primary btn-lg w-100 mb-3" type="submit">
+                                <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
                                     Subscribe Now
                                 </button>
                             </form>
@@ -63,34 +68,6 @@
                     <div class="text-center text-muted small">
                         <p class="mb-2">✓ 30-day money-back guarantee</p>
                         <p class="mb-0">✓ Cancel anytime</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-5">
-                <div class="text-center mb-4">
-                    <h3>Trusted by Educators Worldwide</h3>
-                </div>
-                <div class="row g-4 justify-content-center">
-                    <div class="col-md-6">
-                        <div class="card border-0 bg-light">
-                            <div class="card-body">
-                                <p class="mb-3">"This tool has revolutionized my lesson planning. I save hours every week!"</p>
-                                <div class="small text-muted">
-                                    - Sarah M., 5th Grade Teacher
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card border-0 bg-light">
-                            <div class="card-body">
-                                <p class="mb-3">"The quality of the lesson plans is outstanding. Well worth the investment."</p>
-                                <div class="small text-muted">
-                                    - John D., High School Science
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

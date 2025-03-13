@@ -98,6 +98,7 @@ def create_checkout_session():
 
         session['stripe_customer_id'] = customer.id
 
+        # Create checkout session with subscription
         checkout_session = stripe.checkout.Session.create(
             customer=customer.id,
             line_items=[{
@@ -108,10 +109,11 @@ def create_checkout_session():
             success_url=f'https://{YOUR_DOMAIN}/subscription-success',
             cancel_url=f'https://{YOUR_DOMAIN}/pricing',
         )
+
         return redirect(checkout_session.url, code=303)
     except Exception as e:
         logger.error(f"Error creating checkout session: {str(e)}")
-        flash('An error occurred while processing your request.', 'danger')
+        flash('An error occurred while processing your request. Please try again later.', 'danger')
         return redirect(url_for('pricing'))
 
 @app.route('/subscription-success')
@@ -122,13 +124,17 @@ def subscription_success():
 
 @app.route('/pricing')
 def pricing():
-    return render_template('pricing.html', is_subscribed=check_subscription() if current_user.is_authenticated else False)
+    is_subscribed = check_subscription() if current_user.is_authenticated else False
+    return render_template('pricing.html', is_subscribed=is_subscribed)
 
 @app.route('/')
 def landing():
-    if current_user.is_authenticated and check_subscription():
-        return redirect(url_for('app_index'))
-    return render_template('landing.html')
+    if current_user.is_authenticated:
+        is_subscribed = check_subscription()
+        if is_subscribed:
+            return redirect(url_for('app_index'))
+        return render_template('landing.html', is_subscribed=is_subscribed)
+    return render_template('landing.html', is_subscribed=False)
 
 @app.route('/app')
 @login_required
