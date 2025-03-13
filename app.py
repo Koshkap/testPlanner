@@ -1,5 +1,5 @@
 import os
-import json
+import logging
 from flask import Flask, render_template, request, jsonify, make_response, redirect, url_for, flash, session
 from openai import OpenAI
 from functools import wraps
@@ -23,7 +23,16 @@ STRIPE_PRICE_ID = os.environ.get("STRIPE_PRICE_ID")  # Updated to use environmen
 YOUR_DOMAIN = os.environ.get('REPLIT_DEV_DOMAIN', 'localhost:5000')
 
 if not STRIPE_PRICE_ID:
+    logger.error("STRIPE_PRICE_ID environment variable is missing")
     raise ValueError("STRIPE_PRICE_ID environment variable is required")
+
+try:
+    # Verify if it's a valid price ID by making a test API call
+    stripe.Price.retrieve(STRIPE_PRICE_ID)
+    logger.info(f"Successfully validated Stripe Price ID: {STRIPE_PRICE_ID}")
+except stripe.error.InvalidRequestError as e:
+    logger.error(f"Invalid Stripe Price ID: {STRIPE_PRICE_ID}")
+    raise ValueError(f"Invalid Stripe Price ID: {str(e)}")
 
 try:
     # Initialize authentication
