@@ -17,6 +17,7 @@ dependencies = [
     "stripe>=11.6.0",
     "slack-sdk>=3.34.0",
     "twilio>=9.5.0",
+    "toml>=0.10.2",
 ]
 
 [build-system]

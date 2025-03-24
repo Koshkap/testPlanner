@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Extract dependencies from pyproject.toml and create requirements.txt
+python3 -c "
+import toml
+with open('pyproject.toml') as f:
+    config = toml.load(f)
+deps = config['project']['dependencies']
+with open('requirements.txt', 'w') as f:
+    for dep in deps:
+        f.write(f'{dep}\n')
+"
+
 # Install Python dependencies
 pip install -r requirements.txt
 
