@@ -1,0 +1,17 @@
+Metadata-Version: 2.4
+Name: repl-nix-workspace
+Version: 0.1.0
+Summary: AI Lesson Planner - Smart Lesson Planning Assistant
+Requires-Python: >=3.11
+Requires-Dist: email-validator>=2.2.0
+Requires-Dist: flask-login>=0.6.3
+Requires-Dist: flask>=3.1.0
+Requires-Dist: flask-sqlalchemy>=3.1.1
+Requires-Dist: gunicorn>=23.0.0
+Requires-Dist: openai>=1.63.2
+Requires-Dist: psycopg2-binary>=2.9.10
+Requires-Dist: supabase>=2.13.0
+Requires-Dist: flask-wtf>=1.2.2
+Requires-Dist: stripe>=11.6.0
+Requires-Dist: slack-sdk>=3.34.0
+Requires-Dist: twilio>=9.5.0
