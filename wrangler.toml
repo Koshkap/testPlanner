@@ -2,7 +2,7 @@ name = "ai-lesson-planner"
 compatibility_date = "2024-03-24"
 
 [build]
-command = "pip install -r requirements.txt"
+command = "sh build.sh"
 
 [env.production]
 name = "ai-lesson-planner-prod"
@@ -23,3 +23,6 @@ database_id = "ai-lesson-planner-db"
 crons = []
 
 main = "functions/app.py"
+
+[assets]
+directory = "./static/dist"
