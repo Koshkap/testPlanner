@@ -437,4 +437,10 @@ LESSON_TEMPLATES = {
 }
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Check if running in Cloudflare Pages environment
+    if os.environ.get('CF_PAGES'):
+        # Cloudflare Pages specific configuration
+        app.run(host='127.0.0.1', port=8788)
+    else:
+        # Local development configuration
+        app.run(host='0.0.0.0', port=5000, debug=True)
