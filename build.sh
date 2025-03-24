@@ -11,6 +11,12 @@ with open('requirements.txt', 'w') as f:
         f.write(f'{dep}\n')
 "
 
+# Check if requirements.txt exists.  If not, exit with an error.
+if [ ! -f "requirements.txt" ]; then
+  echo "Error: requirements.txt not found.  Build failed."
+  exit 1
+fi
+
 # Install Python dependencies
 pip install -r requirements.txt
 

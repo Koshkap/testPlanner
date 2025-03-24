@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}AI Lesson Planner - Smart Lesson Planning Assistant{% endblock %}
+
+{% block content %}
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('landing') }}">
+                <i class="fas fa-chalkboard-teacher"></i> AI Lesson Planner
+            </a>
+            <div class="ms-auto">
+                {% if current_user.is_authenticated %}
+                    {% if is_subscribed %}
+                        <a href="{{ url_for('app_index') }}" class="btn btn-outline-primary me-2">Dashboard</a>
+                    {% else %}
+                        <a href="{{ url_for('pricing') }}" class="btn btn-primary me-2">Upgrade Now</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary me-2">Login</a>
+                    <a href="{{ url_for('signup') }}" class="btn btn-primary">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-3">Save Hours on Lesson Planning with AI</h1>
+                    <p class="lead mb-4">Join thousands of educators who create professional, engaging lesson plans in minutes, not hours. Start today for just $5/month.</p>
+                    <div class="cta-group">
+                        <a href="{{ url_for('pricing') }}" class="btn btn-primary btn-lg mb-2 me-2">Start Now - Only $5/month</a>
+                        <a href="#features" class="btn btn-outline-primary btn-lg mb-2">See How It Works</a>
+                    </div>
+                    <p class="text-muted mt-3">✓ 30-day money-back guarantee &nbsp; ✓ Cancel anytime</p>
+                </div>
+                <div class="col-lg-6">
+                    <!-- Editor Preview -->
+                    <div class="editor-preview shadow-lg rounded-3 bg-white p-4">
+                        <div class="mock-header d-flex align-items-center mb-4">
+                            <div class="mock-icon me-3">
+                                <i class="fas fa-chalkboard-teacher fa-2x text-primary"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1">Sample Lesson Plan</h5>
+                                <p class="text-muted small mb-0">Science - Grade 5</p>
+                            </div>
+                        </div>
+                        <div class="mock-content">
+                            <div class="mock-section mb-3">
+                                <h6 class="mock-title">Overview</h6>
+                                <div class="mock-text"></div>
+                                <div class="mock-text" style="width: 80%"></div>
+                            </div>
+                            <div class="mock-section mb-3">
+                                <h6 class="mock-title">Objectives</h6>
+                                <div class="mock-list"></div>
+                                <div class="mock-list" style="width: 90%"></div>
+                                <div class="mock-list" style="width: 85%"></div>
+                            </div>
+                            <div class="mock-section">
+                                <h6 class="mock-title">Activities</h6>
+                                <div class="mock-list"></div>
+                                <div class="mock-list" style="width: 95%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section id="features" class="features py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Why Educators Love AI Lesson Planner</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <i class="fas fa-clock fa-2x mb-3 text-primary"></i>
+                        <h3>Save 3+ Hours Weekly</h3>
+                        <p>Generate complete lesson plans in minutes, not hours. More time for what matters - teaching.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <i class="fas fa-brain fa-2x mb-3 text-primary"></i>
+                        <h3>20+ Pro Templates</h3>
+                        <p>Access research-based frameworks and teaching approaches trusted by educators worldwide.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card text-center p-4">
+                        <i class="fas fa-file-export fa-2x mb-3 text-primary"></i>
+                        <h3>Easy Export & Share</h3>
+                        <p>Download your plans in PDF or Word format. Perfect for documentation and collaboration.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Social Proof Section -->
+    <section class="social-proof py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Trusted by 10,000+ Educators</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="testimonial-card p-4 bg-light rounded">
+                        <p class="mb-3">"I save over 3 hours every week on lesson planning. The AI suggestions are incredibly helpful!"</p>
+                        <div class="d-flex align-items-center">
+                            <div class="ms-3">
+                                <h5 class="mb-0">Sarah M.</h5>
+                                <small class="text-muted">5th Grade Teacher</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial-card p-4 bg-light rounded">
+                        <p class="mb-3">"The quality of plans is outstanding. It's like having a master teacher guiding you."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="ms-3">
+                                <h5 class="mb-0">John D.</h5>
+                                <small class="text-muted">High School Science</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="testimonial-card p-4 bg-light rounded">
+                        <p class="mb-3">"Worth every penny! The templates alone have transformed my teaching approach."</p>
+                        <div class="d-flex align-items-center">
+                            <div class="ms-3">
+                                <h5 class="mb-0">Maria R.</h5>
+                                <small class="text-muted">Middle School Math</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="cta bg-primary text-white py-5">
+        <div class="container text-center">
+            <h2 class="mb-4">Start Creating Better Lesson Plans Today</h2>
+            <p class="lead mb-4">Join thousands of educators saving time with AI-powered lesson planning - Just $5/month</p>
+            <a href="{{ url_for('pricing') }}" class="btn btn-light btn-lg">Get Started Now</a>
+            <p class="mt-3 text-white-50">✓ 30-day money-back guarantee &nbsp; ✓ Cancel anytime</p>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero {
+    background-color: #f8f9fa;
+    padding: 80px 0;
+}
+
+.editor-preview {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.mock-text, .mock-list {
+    height: 12px;
+    background: #e9ecef;
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.feature-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+}
+
+.testimonial-card {
+    height: 100%;
+}
+</style>
+{% endblock %}

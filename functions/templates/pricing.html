@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Pricing - AI Lesson Planner{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">Start Creating Better Lesson Plans Today</h1>
+        <p class="lead text-muted">Join thousands of educators saving hours every week with AI-powered lesson planning</p>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="text-center">
+                        <h2 class="mb-4">Professional Plan</h2>
+                        <div class="mb-4">
+                            <span class="display-4">$5</span>
+                            <span class="text-muted">/month</span>
+                        </div>
+                    </div>
+
+                    <ul class="list-unstyled mb-5">
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Unlimited AI-Generated Lesson Plans
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            20+ Professional Templates
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Custom Learning Objectives
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Export to PDF & Word
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Save & Access History
+                        </li>
+                    </ul>
+
+                    {% if current_user.is_authenticated %}
+                        {% if is_subscribed %}
+                            <button class="btn btn-success btn-lg w-100 mb-3" disabled>
+                                Already Subscribed
+                            </button>
+                            <a href="{{ url_for('app_index') }}" class="btn btn-outline-primary btn-lg w-100">
+                                Go to Dashboard
+                            </a>
+                        {% else %}
+                            <form action="{{ url_for('create_checkout_session') }}" method="POST">
+                                <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                                    Subscribe Now
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg w-100 mb-3">
+                            Sign Up to Subscribe
+                        </a>
+                    {% endif %}
+
+                    <div class="text-center text-muted small">
+                        <p class="mb-2">✓ 30-day money-back guarantee</p>
+                        <p class="mb-0">✓ Cancel anytime</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
