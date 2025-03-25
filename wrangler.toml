@@ -4,24 +4,6 @@ compatibility_date = "2024-03-24"
 [build]
 command = "sh build.sh"
 
-[env.production]
-name = "ai-lesson-planner-prod"
-route = "/"
-workers_dev = true
-
-[env.staging]
-name = "ai-lesson-planner-staging"
-route = "/"
-workers_dev = true
-
-[[d1_databases]]
-binding = "DB"
-database_name = "ai_lesson_planner"
-database_id = "ai-lesson-planner-db"
-
-[triggers]
-crons = []
-
 main = "functions/app.py"
 
 [assets]
